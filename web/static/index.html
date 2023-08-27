@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="stylesheet" type="text/css" href="css/login.css"/>
+    <link rel="shortcut icon" href="images/favico.ico">
+    <script type="text/javascript" src="js/app.js"></script>
+    <script src="http://libs.baidu.com/jquery/2.0.0/jquery.js"></script>
+    <script src="http://www.gongjuji.net/Content/files/jquery.md5.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+
+<form method="post">
+    <div class="container">
+        <img src="" id="headurl" alt="你没有头像，可以上传一个" class="center" style="height: 250px;width: 250px">
+        <p>
+            <input type="file" id="ipt-file"/>
+            <button style="width: 150px" type="button" id="btn_upload" onclick="upload()">上传</button>
+        </p>
+        <p id="info"></p>
+    </div>
+
+    <div class="container">
+        <label for="uname"><b>用户名</b></label>
+        <input id="username" type="text" readonly name="uname" required>
+
+        <label for="nick"><b>昵称</b></label>
+        <input id="nickname" type="text" placeholder="Enter nickname" name="nick" required>
+
+        <div id="login_control">
+            <button type="button" id="btn_edit" onclick="changeNickName()">修改昵称</button>
+            <button type="button" id="btn_logout" onclick="logout()">登出</button>
+        </div>
+    </div>
+</form>
+
+</body>
+</html>
+
+<script>
+
+    var input = document.querySelector("#ipt-file")
+    var headurl = document.getElementById('headurl')
+    var username = document.getElementById('username')
+
+    from_username = getQueryVariable('name')
+    console.log("from_username:" + from_username)
+    // console.log("username:" + username)
+    // console.log("################")
+    username.value = from_username
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('get', urlPrefix + '/user/get_user_info?username=' + from_username);
+    xhr.send()
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            console.log(xhr.responseText)
+            var json = eval("(" + xhr.responseText + ")")
+
+            if (json.code !== 0) {
+                console.log(json.msg)
+                alert("请先登录!" + json.msg)
+                window.location.href = "login.html"
+            }
+
+            username.value = json.data.user_name
+            nickname.value = json.data.nick_name
+            previousNickname = json.data.nick_name
+
+            console.log("username.value:" + username.value)
+
+            if (json.data.headurl != "") {
+                console.log("set headurl:" + json.data.headurl)
+                headurl.src = json.data.headurl
+            }
+        }
+    }
+
+    function getQueryVariable(variable) {
+        var query = window.location.search.substring(1);
+        var vars = query.split("&");
+        for (var i = 0; i < vars.length; i++) {
+            var pair = vars[i].split("=");
+            if (pair[0] == variable) {
+                return pair[1];
+            }
+        }
+        return (false);
+    }
+
+    function logout() {
+        console.log("send to logout")
+        $.ajax({
+            type: "POST",
+            dataType: "json",
+            url: urlPrefix + '/user/logout',
+            contentType: "application/json",
+            data: JSON.stringify({
+                "user_name": username.value,
+            }),
+            success: function (result) {
+                alert("登出成功");
+                window.location.href = urlPrefix + "/static/login.html";
+            },
+            error:function (result) {
+                alert("登出失败")
+            }
+        });
+    }
+
+    function changeNickName() {
+        var newNickname = nickname.value
+        if (newNickname.length < 1) {
+            alert('昵称长度不能为空')
+            return
+        }
+
+        if (newNickname == previousNickname) {
+            alert('昵称没有改变')
+            return
+        }
+        $.ajax({
+            type: "POST",
+            dataType: "json",
+            url: urlPrefix + '/user/update_nick_name',
+            contentType: "application/json",
+            data: JSON.stringify({
+                "user_name": username.value,
+                "new_nick_name": newNickname,
+            }),
+            success: function (result) {
+                if (result.code == 0) {
+                    alert("修改成功");
+                } else {
+                    alert("修改失败")
+                }
+            },
+            error:function (result) {
+                alert("修改失败")
+            }
+        });
+    }
+
+    function upload() {
+        if (input.files.length === 0) {
+            console.log("未选择文件");
+            return;
+        }
+
+        var formData = new FormData();
+        formData.append("picture", input.files[0]);
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('post', urlPrefix + '/uploadpic?username=' + from_username)
+        xhr.send(formData);
+
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                console.log(xhr.responseText);
+                var json = eval("(" + xhr.responseText + ")");
+                if (json.code == 0 && json.data.headurl != "") {
+                    headurl.src = json.data.headurl
+                } else {
+                    alert("修改头像失败:" + json.msg)
+                }
+            }
+        };
+    }
+</script>
+

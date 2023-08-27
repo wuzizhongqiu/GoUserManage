@@ -1,0 +1,30 @@
+# 服务的配置信息
+app:
+  app_name: "gouse" # 应用名称
+  version: "v1.0.1" # 版本
+  port: 8080        # 服务启用端口
+  run_mode: release # 可选dev、release模式
+
+# 数据库的配置
+db:
+  host: "0.0.0.0"     # host
+  port: 8086          # port
+  user: "root"        # user
+  password: "123456"  # password
+  dbname: "camps_user"    # dbname
+  max_idle_conn: 5    # 最大空闲连接数
+  max_open_conn: 20   # 最大连接数
+  max_idle_time: 300  # 最大空闲时间
+
+# Redis 配置
+redis:
+  rhost: "0.0.0.0"
+  rport: 8089
+  rdb: 0
+  passwd: ''
+  poolsize: 100
+
+# 缓存配置
+cache:
+  session_expired: 7200 # second
+  user_expired: 300  # second
